@@ -363,14 +363,32 @@ public:
         double sliceOnsets[64], sliceDurs[64];
 
         if (rateMode > 0 && gridPPQ > 0.0) {
-            double sg = std::round(onset / gridPPQ) * gridPPQ;
-            double eg = sg;
-            if (duration > 0.0) eg = std::round((onset + duration) / gridPPQ) * gridPPQ;
-            if (eg <= sg) eg = sg + gridPPQ;
-            numSlices = 0;
-            for (double t = sg; t < eg && numSlices < 64; t += gridPPQ) {
-                sliceOnsets[numSlices] = t; sliceDurs[numSlices] = gridPPQ; numSlices++;
+            // Snap the note onset to the NEAREST grid line, then fold it into
+            // [0, activeWindowPPQ) up front so quantization can never push it onto
+            // (or past) the loop boundary. Ratchet cells are laid out from that
+            // grid-aligned start and are cut off at the window edge; any spill past
+            // the boundary is carried by the per-slice wrap-around below (which keeps
+            // the note's total length intact) instead of being re-emitted as an
+            // out-of-order full cell at position 0.0.
+            double gridStart = std::round(onset / gridPPQ) * gridPPQ;
+            if (activeWindowPPQ > 0.0) {
+                gridStart = std::fmod(gridStart, activeWindowPPQ);
+                if (gridStart < 0.0) gridStart += activeWindowPPQ;
             }
+            double span = (duration > 0.0 ? duration : gridPPQ);
+            int cellCount = (int)std::round(span / gridPPQ);
+            if (cellCount < 1)  cellCount = 1;
+            if (cellCount > 64) cellCount = 64;
+
+            numSlices = 0;
+            for (int c = 0; c < cellCount; ++c) {
+                double cellOnset = gridStart + (double)c * gridPPQ;
+                if (activeWindowPPQ > 0.0 && cellOnset >= activeWindowPPQ) break;
+                sliceOnsets[numSlices] = cellOnset;
+                sliceDurs[numSlices]   = gridPPQ;
+                numSlices++;
+            }
+            if (numSlices == 0) { sliceOnsets[0] = gridStart; sliceDurs[0] = gridPPQ; numSlices = 1; }
         } else {
             sliceOnsets[0] = onset; sliceDurs[0] = duration;
         }
@@ -406,6 +424,10 @@ public:
             if (activeWindowPPQ > 0.0) {
                 sOn = std::fmod(sOn, activeWindowPPQ);
                 if (sOn < 0.0) sOn += activeWindowPPQ;
+                // An onset sitting a hair before the loop boundary is really the
+                // downbeat of the next pass: snap it to 0 rather than letting the
+                // wrap-around below carve out a near-zero "head" staccato blip.
+                if (activeWindowPPQ - sOn < 60.0) sOn = 0.0;
             }
             if (sOn < 0.0) continue;
 
@@ -849,20 +871,28 @@ public:
                     hp = std::max(lowLimit, std::min(highLimit, std::max(1, hp)));
 
                     double delay = GetPatiencePPQ(isSync, patienceFree, patienceSync);
-                    double targetPPQ = fDuetClockPPQ + delay;
-
-                    double gridPPQ = RateToPPQ(rateMode);
-                    if (gridPPQ > 0.0) {
-                        targetPPQ = std::round(targetPPQ / gridPPQ) * gridPPQ;
+                    double targetPPQ;
+                    if (delay <= 0.0) {
+                        // Patience == 0 (or Bypass): real-time harmonizer. Fire in the
+                        // very next batch with ZERO added latency -- completely bypass
+                        // grid quantization AND swing so the harmony lands alongside the
+                        // live note instead of waiting for the next grid boundary.
+                        targetPPQ = fDuetClockPPQ;
+                    } else {
+                        // Patience > 0: time-delayed echo. Quantize/swing the delayed
+                        // hit, but never let it round earlier than 'now'.
+                        targetPPQ = fDuetClockPPQ + delay;
+                        double gridPPQ = RateToPPQ(rateMode);
+                        if (gridPPQ > 0.0) {
+                            targetPPQ = std::round(targetPPQ / gridPPQ) * gridPPQ;
+                        }
+                        if (swingKnob != 0.5f) {
+                            long ticks = (long)std::round(targetPPQ);
+                            if      (ticks % 3840 == 1920) targetPPQ += (swingKnob - 0.5f) * 2.0 * 960.0;
+                            else if (ticks % 1920 == 960)  targetPPQ += (swingKnob - 0.5f) * 2.0 * 480.0;
+                        }
+                        if (targetPPQ <= fDuetClockPPQ) targetPPQ = fDuetClockPPQ;
                     }
-                    if (swingKnob != 0.5f) {
-                        long ticks = (long)std::round(targetPPQ);
-                        if      (ticks % 3840 == 1920) targetPPQ += (swingKnob - 0.5f) * 2.0 * 960.0;
-                        else if (ticks % 1920 == 960)  targetPPQ += (swingKnob - 0.5f) * 2.0 * 480.0;
-                    }
-
-                    // Clamp to now so there's NO lag when rounding backwards & patience is 0!
-                    if (targetPPQ <= fDuetClockPPQ) targetPPQ = fDuetClockPPQ;
 
                     float vf = (float)ev.fVelocity + (velocityKnob - 0.5f) * 64.0f;
                     long rTicks = (long)std::round(targetPPQ);
@@ -904,19 +934,24 @@ public:
                     int hpOff = fDuetHarmonized[(int)pitch];
                     if (hpOff >= 0) {
                         double delay = GetPatiencePPQ(isSync, patienceFree, patienceSync);
-                        double targetPPQ = fDuetClockPPQ + delay;
-
-                        double gridPPQ = RateToPPQ(rateMode);
-                        if (gridPPQ > 0.0) {
-                            targetPPQ = std::round(targetPPQ / gridPPQ) * gridPPQ;
+                        double targetPPQ;
+                        if (delay <= 0.0) {
+                            // Real-time harmonizer: release the harmony note the instant
+                            // the live note is released (no grid/swing latency).
+                            targetPPQ = fDuetClockPPQ;
+                        } else {
+                            targetPPQ = fDuetClockPPQ + delay;
+                            double gridPPQ = RateToPPQ(rateMode);
+                            if (gridPPQ > 0.0) {
+                                targetPPQ = std::round(targetPPQ / gridPPQ) * gridPPQ;
+                            }
+                            if (swingKnob != 0.5f) {
+                                long ticks = (long)std::round(targetPPQ);
+                                if      (ticks % 3840 == 1920) targetPPQ += (swingKnob - 0.5f) * 2.0 * 960.0;
+                                else if (ticks % 1920 == 960)  targetPPQ += (swingKnob - 0.5f) * 2.0 * 480.0;
+                            }
+                            if (targetPPQ <= fDuetClockPPQ) targetPPQ = fDuetClockPPQ;
                         }
-                        if (swingKnob != 0.5f) {
-                            long ticks = (long)std::round(targetPPQ);
-                            if      (ticks % 3840 == 1920) targetPPQ += (swingKnob - 0.5f) * 2.0 * 960.0;
-                            else if (ticks % 1920 == 960)  targetPPQ += (swingKnob - 0.5f) * 2.0 * 480.0;
-                        }
-
-                        if (targetPPQ <= fDuetClockPPQ) targetPPQ = fDuetClockPPQ;
 
                         if (fDuetQueueSize < kDuetQueueMax)
                             fDuetQueue[fDuetQueueSize++] = { (TJBox_UInt8)hpOff, 0, targetPPQ };
@@ -987,12 +1022,23 @@ public:
         }
 
         if (fState == STATE_EVALUATING_SILENCE) {
-            fFramesSinceSilence += 64;
-            double required = GetSilenceFrames(isSync, silenceFree, silenceSync);
-            if (fFramesSinceSilence >= required) {
+            if (!isAnswerMode) {
+                // DUET MODE completely ignores the Silence Threshold: it must never sit
+                // in the silence-evaluation wait (this can only happen if the mode was
+                // switched mid-evaluation). Snap straight through to Patience so the
+                // live harmonizer is never gated by the silence timer.
                 fPhraseLengthPPQ = SnapToNearestBeat(fPhraseLengthPPQ);
                 fState = STATE_PATIENCE;
                 fPatiencePPQRemaining = GetPatiencePPQ(isSync, patienceFree, patienceSync);
+                fFramesSinceSilence = 0;
+            } else {
+                fFramesSinceSilence += 64;
+                double required = GetSilenceFrames(isSync, silenceFree, silenceSync);
+                if (fFramesSinceSilence >= required) {
+                    fPhraseLengthPPQ = SnapToNearestBeat(fPhraseLengthPPQ);
+                    fState = STATE_PATIENCE;
+                    fPatiencePPQRemaining = GetPatiencePPQ(isSync, patienceFree, patienceSync);
+                }
             }
         }
 
