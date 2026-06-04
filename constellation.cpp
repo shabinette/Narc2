@@ -438,11 +438,18 @@ public:
             double finalDur = sDur;
             if (sDur > 0.0) { finalDur = sDur * (lengthKnob * 2.0); if (finalDur < 60.0) finalDur = 60.0; }
             
-            // Note Overflow Wrap-Around Logic
+            // Note Overflow Wrap-Around Logic.
+            // A musically meaningful threshold stops floating-point error and grid
+            // snapping from manufacturing a microscopic wrap: a note meant to land
+            // exactly on the loop boundary (sOn + finalDur ~= activeWindowPPQ, e.g.
+            // 61440.00001 vs 61440.0) would otherwise spawn a sub-tick NoteOn at 0.0
+            // that the loop reset re-attacks as a staccato blip.
+            const double kWrapThresholdPPQ = 60.0; // ~1/64th of a beat
             double wrappedDur = 0.0;
             if (activeWindowPPQ > 0.0 && sOn + finalDur > activeWindowPPQ) {
-                wrappedDur = (sOn + finalDur) - activeWindowPPQ;
-                finalDur = activeWindowPPQ - sOn; // First segment plays to end of loop
+                double overshoot = (sOn + finalDur) - activeWindowPPQ;
+                finalDur = activeWindowPPQ - sOn; // First segment always plays to end of loop
+                if (overshoot >= kWrapThresholdPPQ) wrappedDur = overshoot; // ignore micro-wraps
             }
 
             // PRIMARY NOTE SEGMENT
@@ -460,8 +467,9 @@ public:
                 JBox_OutputNoteEvent(ev); fCurrentlyPlayingVoices[pitch] = 0;
             }
 
-            // WRAPPED NOTE SEGMENT (If note spills past loop boundary)
-            if (wrappedDur > 0.0) {
+            // WRAPPED NOTE SEGMENT (only when the spill past the loop boundary is a
+            // real, audible note -- never a sub-threshold floating-point sliver)
+            if (wrappedDur >= kWrapThresholdPPQ) {
                 double wOn = 0.0;
                 double wOff = wrappedDur;
                 if (wOn >= fPlaybackPPQ && wOn < fPlaybackPPQ + batchPPQ) {
