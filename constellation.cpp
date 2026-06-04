@@ -112,7 +112,7 @@ public:
             fActiveNoteBufferIndex[i] = -1;
             fCurrentlyPlayingVoices[i] = 0;
             fInputRippleX[i] = 0.5f; fOutputRippleX[i] = 0.5f;
-            fDuetHarmonized[i] = -1;
+            fDuetPrimary[i] = -1; fDuetSecondary[i] = -1;
         }
         fDuetQueueSize = 0; fDuetClockPPQ = 0.0;
         for (int i = 0; i < 64; ++i) {
@@ -363,32 +363,23 @@ public:
         double sliceOnsets[64], sliceDurs[64];
 
         if (rateMode > 0 && gridPPQ > 0.0) {
-            // Snap the note onset to the NEAREST grid line, then fold it into
-            // [0, activeWindowPPQ) up front so quantization can never push it onto
-            // (or past) the loop boundary. Ratchet cells are laid out from that
-            // grid-aligned start and are cut off at the window edge; any spill past
-            // the boundary is carried by the per-slice wrap-around below (which keeps
-            // the note's total length intact) instead of being re-emitted as an
-            // out-of-order full cell at position 0.0.
+            // Quantize the onset to the NEAREST grid line and lay out RAW (absolute)
+            // ratchet cells. We deliberately do NOT fold gridStart into the window
+            // here: running fmod() on gridStart before slicing turns a note that
+            // rounds onto the loop edge (fmod(N, N) == 0) into a spurious duplicate
+            // slice on the downbeat. Boundary folding/snapping happens per-slice below.
             double gridStart = std::round(onset / gridPPQ) * gridPPQ;
-            if (activeWindowPPQ > 0.0) {
-                gridStart = std::fmod(gridStart, activeWindowPPQ);
-                if (gridStart < 0.0) gridStart += activeWindowPPQ;
-            }
             double span = (duration > 0.0 ? duration : gridPPQ);
             int cellCount = (int)std::round(span / gridPPQ);
             if (cellCount < 1)  cellCount = 1;
             if (cellCount > 64) cellCount = 64;
 
             numSlices = 0;
-            for (int c = 0; c < cellCount; ++c) {
-                double cellOnset = gridStart + (double)c * gridPPQ;
-                if (activeWindowPPQ > 0.0 && cellOnset >= activeWindowPPQ) break;
-                sliceOnsets[numSlices] = cellOnset;
+            for (int c = 0; c < cellCount && numSlices < 64; ++c) {
+                sliceOnsets[numSlices] = gridStart + (double)c * gridPPQ;
                 sliceDurs[numSlices]   = gridPPQ;
                 numSlices++;
             }
-            if (numSlices == 0) { sliceOnsets[0] = gridStart; sliceDurs[0] = gridPPQ; numSlices = 1; }
         } else {
             sliceOnsets[0] = onset; sliceDurs[0] = duration;
         }
@@ -421,12 +412,15 @@ public:
                 sOn += (fLoopCount % 2 == 0) ? da : -da;
             }
 
+            // Fold the raw (absolute) grid slice into [0, activeWindowPPQ) HERE, after
+            // the slices were generated, so a cell that lands on the loop edge is never
+            // pre-duplicated onto the downbeat.
             if (activeWindowPPQ > 0.0) {
                 sOn = std::fmod(sOn, activeWindowPPQ);
                 if (sOn < 0.0) sOn += activeWindowPPQ;
-                // An onset sitting a hair before the loop boundary is really the
-                // downbeat of the next pass: snap it to 0 rather than letting the
-                // wrap-around below carve out a near-zero "head" staccato blip.
+                // A slice sitting on (or within ~1/64th of a beat before) the loop
+                // boundary is really the downbeat of the NEXT pass: snap it cleanly to
+                // 0.0 instead of slicing a micro-blip off the tail of the phrase.
                 if (activeWindowPPQ - sOn < 60.0) sOn = 0.0;
             }
             if (sOn < 0.0) continue;
@@ -713,7 +707,7 @@ public:
             for (int i=0;i<512;i++) fMutationOffsets[i]=0;
             fClearPending = false;
             if (fActiveNotes > 0) { fActiveNotes=0; lampChanged=true; }
-            for (int i = 0; i < 128; i++) fDuetHarmonized[i] = -1;
+            for (int i = 0; i < 128; i++) { fDuetPrimary[i] = -1; fDuetSecondary[i] = -1; }
             fDuetQueueSize = 0; fDuetClockPPQ = 0.0;
         }
 
@@ -870,26 +864,32 @@ public:
                     if (fState == STATE_IDLE || fState == STATE_LISTENING || fState == STATE_EVALUATING_SILENCE)
                         JBox_OutputNoteEvent(ev);
                 } else {
-                    // DUET MODE: Live arpeggiator & processor.
-                    // Pass the player's OWN note straight through at its ORIGINAL pitch.
-                    // Octave / harmony / transpose must only colour the added harmony
-                    // voice (hp) below -- never the note the user is actually playing.
-                    JBox_OutputNoteEvent(ev);
-
+                    // DUET MODE: real-time, parallel pitch processor & harmonizer.
+                    //   PRIMARY   voice = the live note shifted by Octave + Transpose.
+                    //   SECONDARY voice = PRIMARY + Harmony (only when Harmony is engaged).
+                    // Both transformed voices are queued so they sound in parallel with
+                    // the player; the raw dry note is emitted ONLY when Keep Input is ON.
                     int origDeg = MusicTheory::GetScaleDegree((int)pitch, fActiveRoot, scaleMode);
-                    int degree = origDeg + transposeShift;
-                    if (responseMode == 1) degree = -degree;
-                    degree += harmonyShift * fPitchDirectionMult;
-                    int hp = MusicTheory::GetPitchFromDegree(degree, (int)pitch / 12 + octaveShift * fPitchDirectionMult, fActiveRoot, scaleMode);
-                    hp = std::max(lowLimit, std::min(highLimit, std::max(1, hp)));
+                    int baseDeg = origDeg + transposeShift;
+                    if (responseMode == 1) baseDeg = -baseDeg;
+                    int baseOct = (int)pitch / 12 + octaveShift * fPitchDirectionMult;
+
+                    int primary = MusicTheory::GetPitchFromDegree(baseDeg, baseOct, fActiveRoot, scaleMode);
+                    primary = std::max(lowLimit, std::min(highLimit, std::max(1, primary)));
+
+                    int secondary = -1;
+                    if (harmonyShift != 0) {
+                        int harmDeg = baseDeg + harmonyShift * fPitchDirectionMult;
+                        secondary = MusicTheory::GetPitchFromDegree(harmDeg, baseOct, fActiveRoot, scaleMode);
+                        secondary = std::max(lowLimit, std::min(highLimit, std::max(1, secondary)));
+                    }
 
                     double delay = GetPatiencePPQ(isSync, patienceFree, patienceSync);
                     double targetPPQ;
                     if (delay <= 0.0) {
-                        // Patience == 0 (or Bypass): real-time harmonizer. Fire in the
-                        // very next batch with ZERO added latency -- completely bypass
-                        // grid quantization AND swing so the harmony lands alongside the
-                        // live note instead of waiting for the next grid boundary.
+                        // Patience == 0 (or Bypass): real-time. Fire in the very next
+                        // batch with ZERO added latency -- bypass grid quantization AND
+                        // swing so the processed voices land in parallel with the player.
                         targetPPQ = fDuetClockPPQ;
                     } else {
                         // Patience > 0: time-delayed echo. Quantize/swing the delayed
@@ -922,12 +922,24 @@ public:
                         if ((MusicTheory::SeededRandom(liveSeed) % 100) < (TJBox_UInt32)(dp * 100.0f)) drop = true;
                     }
 
+                    // Raw dry input is only passed through when Keep Input is ON.
+                    if (keepInput) JBox_OutputNoteEvent(ev);
+
                     if (!drop) {
                         if (fDuetQueueSize < kDuetQueueMax)
-                            fDuetQueue[fDuetQueueSize++] = { (TJBox_UInt8)hp, (TJBox_UInt8)finalVel, targetPPQ };
-                        fDuetHarmonized[(int)pitch] = hp;
+                            fDuetQueue[fDuetQueueSize++] = { (TJBox_UInt8)primary, (TJBox_UInt8)finalVel, targetPPQ };
+                        fDuetPrimary[(int)pitch] = primary;
+
+                        if (secondary >= 0) {
+                            if (fDuetQueueSize < kDuetQueueMax)
+                                fDuetQueue[fDuetQueueSize++] = { (TJBox_UInt8)secondary, (TJBox_UInt8)finalVel, targetPPQ };
+                            fDuetSecondary[(int)pitch] = secondary;
+                        } else {
+                            fDuetSecondary[(int)pitch] = -1;
+                        }
                     } else {
-                        fDuetHarmonized[(int)pitch] = -1;
+                        fDuetPrimary[(int)pitch] = -1;
+                        fDuetSecondary[(int)pitch] = -1;
                     }
                 }
 
@@ -944,35 +956,39 @@ public:
                     if (fState == STATE_IDLE || fState == STATE_LISTENING || fState == STATE_EVALUATING_SILENCE)
                         JBox_OutputNoteEvent(ev);
                 } else {
-                    // Release the dry pass-through note at its original pitch (see note-on).
-                    JBox_OutputNoteEvent(ev);
+                    // Release the dry pass-through note only if Keep Input is ON.
+                    if (keepInput) JBox_OutputNoteEvent(ev);
 
-                    int hpOff = fDuetHarmonized[(int)pitch];
-                    if (hpOff >= 0) {
-                        double delay = GetPatiencePPQ(isSync, patienceFree, patienceSync);
-                        double targetPPQ;
-                        if (delay <= 0.0) {
-                            // Real-time harmonizer: release the harmony note the instant
-                            // the live note is released (no grid/swing latency).
-                            targetPPQ = fDuetClockPPQ;
-                        } else {
-                            targetPPQ = fDuetClockPPQ + delay;
-                            double gridPPQ = RateToPPQ(rateMode);
-                            if (gridPPQ > 0.0) {
-                                targetPPQ = std::round(targetPPQ / gridPPQ) * gridPPQ;
-                            }
-                            if (swingKnob != 0.5f) {
-                                long ticks = (long)std::round(targetPPQ);
-                                if      (ticks % 3840 == 1920) targetPPQ += (swingKnob - 0.5f) * 2.0 * 960.0;
-                                else if (ticks % 1920 == 960)  targetPPQ += (swingKnob - 0.5f) * 2.0 * 480.0;
-                            }
-                            if (targetPPQ <= fDuetClockPPQ) targetPPQ = fDuetClockPPQ;
+                    double delay = GetPatiencePPQ(isSync, patienceFree, patienceSync);
+                    double targetPPQ;
+                    if (delay <= 0.0) {
+                        // Real-time: release the processed voices the instant the live
+                        // note is released (no grid/swing latency).
+                        targetPPQ = fDuetClockPPQ;
+                    } else {
+                        targetPPQ = fDuetClockPPQ + delay;
+                        double gridPPQ = RateToPPQ(rateMode);
+                        if (gridPPQ > 0.0) {
+                            targetPPQ = std::round(targetPPQ / gridPPQ) * gridPPQ;
                         }
-
-                        if (fDuetQueueSize < kDuetQueueMax)
-                            fDuetQueue[fDuetQueueSize++] = { (TJBox_UInt8)hpOff, 0, targetPPQ };
+                        if (swingKnob != 0.5f) {
+                            long ticks = (long)std::round(targetPPQ);
+                            if      (ticks % 3840 == 1920) targetPPQ += (swingKnob - 0.5f) * 2.0 * 960.0;
+                            else if (ticks % 1920 == 960)  targetPPQ += (swingKnob - 0.5f) * 2.0 * 480.0;
+                        }
+                        if (targetPPQ <= fDuetClockPPQ) targetPPQ = fDuetClockPPQ;
                     }
-                    fDuetHarmonized[(int)pitch] = -1;
+
+                    // Release BOTH transformed voices that this input note spawned.
+                    int primOff = fDuetPrimary[(int)pitch];
+                    if (primOff >= 0 && fDuetQueueSize < kDuetQueueMax)
+                        fDuetQueue[fDuetQueueSize++] = { (TJBox_UInt8)primOff, 0, targetPPQ };
+                    int secOff = fDuetSecondary[(int)pitch];
+                    if (secOff >= 0 && fDuetQueueSize < kDuetQueueMax)
+                        fDuetQueue[fDuetQueueSize++] = { (TJBox_UInt8)secOff, 0, targetPPQ };
+
+                    fDuetPrimary[(int)pitch] = -1;
+                    fDuetSecondary[(int)pitch] = -1;
                 }
             }
         }
@@ -1207,7 +1223,8 @@ private:
     int           fAlterEgoActiveCount;
     int           fMutationOffsets[512];
     int           fActiveNoteBufferIndex[128];
-    int           fDuetHarmonized[128];
+    int           fDuetPrimary[128];   // live Duet PRIMARY  output pitch per held input note
+    int           fDuetSecondary[128]; // live Duet SECONDARY harmony pitch per held input note
     TJBox_UInt8   fCurrentlyPlayingVoices[128];
 
     static const int kDuetQueueMax = 512;
