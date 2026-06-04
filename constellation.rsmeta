@@ -1,0 +1,865 @@
+{
+    "format_version": "1.0",
+    "items": {
+        "/Public/Patches/A Strange Place.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Weird",
+                "Airy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Almost Fell.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Short",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Anime.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Fast"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Answer to Who.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Digital"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Bad Boy Bassist.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Bass of Stone.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Hard",
+                "Punchy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Been Here Before.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Vintage",
+                "Clean"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Being Sweet.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Soft"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Bespin Going Then.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Atmospheric",
+                "Airy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Big Hands.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Layered",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/But Does It Boop.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Glitchy",
+                "Synthetic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Chipped Brick.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dirty",
+                "Lo-Fi"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/City Lights.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Synthetic",
+                "Dark"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Climb.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Spacious",
+                "Long"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Clowntown.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Weird",
+                "Fast"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Club.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Rhythmic",
+                "Synthetic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Club2.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Hard",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Club3.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Punchy",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Club4.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Crooked Fingers.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Default.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Clean",
+                "Sequenced"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Distant.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Fast",
+                "Atmospheric"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Dopey Hope.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Bright"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/First Time Dancing .repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Rhythmic",
+                "Fast"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Grain Silo.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Metallic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Hidden Ghost.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Airy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Intersection.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Sequenced",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Just a Good Time.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Thin"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Lazy Boi.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Lo-Fi",
+                "Bass"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Methane Rain.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Atmospheric"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Miss Me Much.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Soft",
+                "Clicky"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Narcissus.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Spacious"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Nice Boy Bassist.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Fat",
+                "Bright"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Night Out.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Synthetic",
+                "Wide"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Normie.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Clean",
+                "Warm"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Nostalgia.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Vintage"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Pep.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Fast"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Pick Me Up.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Punchy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Read the Stars.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Percussive",
+                "Arpeggio"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Reflexive Embarrassment.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Weird",
+                "Glitchy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Riffin.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Arpeggio",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Robo Charm.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Weird",
+                "Glitchy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Second Step.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Short",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Secret Eye.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Synthetic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Self Reflection.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Lo-Fi",
+                "Sequenced"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Speed Run.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Fast",
+                "Arpeggio"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Tippy Toes.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Short",
+                "Weird"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Velvet Play.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Lush",
+                "Long"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Waterfall.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Arpeggio",
+                "Evolving"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Wish.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Airy",
+                "Dark"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Alive.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Evolving"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/At the Dawn.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Airy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Beamed Up.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Synthetic",
+                "Fast"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Believe.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Warm",
+                "Sequenced"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Breeze.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Airy",
+                "Soft"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Call.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Synthetic",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Cascadia.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Lush",
+                "Evolving"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Cinema Hans.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Spacious",
+                "Dark"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Code.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Digital",
+                "Glitchy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Coordinates .repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Sequenced",
+                "Digital"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Cure.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Warm",
+                "Clean"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Dawn Does.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Soft"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Default2.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Clean",
+                "Sequenced"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Forget.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Lo-Fi"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Funkytown.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bass",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Games.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Digital",
+                "Fast"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Look the Stars.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Arpeggio",
+                "Bright"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Lounge.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Warm",
+                "Soft"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Mono Di.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Vintage",
+                "Synthetic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Motherboard.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Digital",
+                "Glitchy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Name of the Kid.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Soft",
+                "Bright"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Night Feeling.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Atmospheric"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/No.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Hard",
+                "Dark"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/On The Wall.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Rhythmic",
+                "Punchy"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/One and Three.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Sequenced",
+                "Rhythmic"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Pump .repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Punchy",
+                "Hard"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Remember.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Vintage",
+                "Lo-Fi"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Session.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Clean",
+                "Layered"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Simple.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Clean",
+                "Short"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Slow Melt.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Long",
+                "Evolving"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Sweet.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Soft",
+                "Lush"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Telling.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Rhythmic",
+                "Digital"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Triangulating .repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Sequenced",
+                "Arpeggio"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Underneath.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Dark",
+                "Bass"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Xolo.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Weird",
+                "Fast"
+            ],
+            "author": "YourName"
+        },
+        "/Public/Patches/Yes.repatch": {
+            "categories": [
+                "Sequencers"
+            ],
+            "tags": [
+                "Bright",
+                "Punchy"
+            ],
+            "author": "YourName"
+        }
+    }
+}
