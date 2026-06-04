@@ -862,7 +862,12 @@ public:
                     if (fState == STATE_IDLE || fState == STATE_LISTENING || fState == STATE_EVALUATING_SILENCE)
                         JBox_OutputNoteEvent(ev);
                 } else {
-                    // DUET MODE: Live arpeggiator & processor
+                    // DUET MODE: Live arpeggiator & processor.
+                    // Pass the player's OWN note straight through at its ORIGINAL pitch.
+                    // Octave / harmony / transpose must only colour the added harmony
+                    // voice (hp) below -- never the note the user is actually playing.
+                    JBox_OutputNoteEvent(ev);
+
                     int origDeg = MusicTheory::GetScaleDegree((int)pitch, fActiveRoot, scaleMode);
                     int degree = origDeg + transposeShift;
                     if (responseMode == 1) degree = -degree;
@@ -931,6 +936,9 @@ public:
                     if (fState == STATE_IDLE || fState == STATE_LISTENING || fState == STATE_EVALUATING_SILENCE)
                         JBox_OutputNoteEvent(ev);
                 } else {
+                    // Release the dry pass-through note at its original pitch (see note-on).
+                    JBox_OutputNoteEvent(ev);
+
                     int hpOff = fDuetHarmonized[(int)pitch];
                     if (hpOff >= 0) {
                         double delay = GetPatiencePPQ(isSync, patienceFree, patienceSync);
