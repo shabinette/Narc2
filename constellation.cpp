@@ -432,18 +432,13 @@ public:
             double finalDur = sDur;
             if (sDur > 0.0) { finalDur = sDur * (lengthKnob * 2.0); if (finalDur < 60.0) finalDur = 60.0; }
             
-            // Note Overflow Wrap-Around Logic.
-            // A musically meaningful threshold stops floating-point error and grid
-            // snapping from manufacturing a microscopic wrap: a note meant to land
-            // exactly on the loop boundary (sOn + finalDur ~= activeWindowPPQ, e.g.
-            // 61440.00001 vs 61440.0) would otherwise spawn a sub-tick NoteOn at 0.0
-            // that the loop reset re-attacks as a staccato blip.
-            const double kWrapThresholdPPQ = 60.0; // ~1/64th of a beat
-            double wrappedDur = 0.0;
+            // Clamp every note to the loop boundary. We deliberately do NOT wrap the
+            // overflow around to position 0.0 any more: because the loop reset calls
+            // KillHangingNotes(), that wrapped tail always came back out as a detached
+            // little fragment at the top of the next cycle -- the "shortened chord" blip.
+            // Clamping keeps each note a single, clean event inside the loop.
             if (activeWindowPPQ > 0.0 && sOn + finalDur > activeWindowPPQ) {
-                double overshoot = (sOn + finalDur) - activeWindowPPQ;
-                finalDur = activeWindowPPQ - sOn; // First segment always plays to end of loop
-                if (overshoot >= kWrapThresholdPPQ) wrappedDur = overshoot; // ignore micro-wraps
+                finalDur = activeWindowPPQ - sOn;
             }
 
             // PRIMARY NOTE SEGMENT
@@ -459,23 +454,6 @@ public:
                 TJBox_UInt16 fr = (TJBox_UInt16)(((offT - fPlaybackPPQ) / batchPPQ) * 64.0);
                 TJBox_NoteEvent ev; ev.fNoteNumber=pitch; ev.fVelocity=0; ev.fAtFrameIndex=fr;
                 JBox_OutputNoteEvent(ev); fCurrentlyPlayingVoices[pitch] = 0;
-            }
-
-            // WRAPPED NOTE SEGMENT (only when the spill past the loop boundary is a
-            // real, audible note -- never a sub-threshold floating-point sliver)
-            if (wrappedDur >= kWrapThresholdPPQ) {
-                double wOn = 0.0;
-                double wOff = wrappedDur;
-                if (wOn >= fPlaybackPPQ && wOn < fPlaybackPPQ + batchPPQ) {
-                    TJBox_UInt16 fr = (TJBox_UInt16)(((wOn - fPlaybackPPQ) / batchPPQ) * 64.0);
-                    TJBox_NoteEvent ev; ev.fNoteNumber=pitch; ev.fVelocity=(TJBox_UInt8)finalVel; ev.fAtFrameIndex=fr;
-                    JBox_OutputNoteEvent(ev); fCurrentlyPlayingVoices[pitch] = 1;
-                }
-                if (wOff >= fPlaybackPPQ && wOff < fPlaybackPPQ + batchPPQ) {
-                    TJBox_UInt16 fr = (TJBox_UInt16)(((wOff - fPlaybackPPQ) / batchPPQ) * 64.0);
-                    TJBox_NoteEvent ev; ev.fNoteNumber=pitch; ev.fVelocity=0; ev.fAtFrameIndex=fr;
-                    JBox_OutputNoteEvent(ev); fCurrentlyPlayingVoices[pitch] = 0;
-                }
             }
 
             // GHOST NOTES (Density)
@@ -869,6 +847,10 @@ public:
                     //   SECONDARY voice = PRIMARY + Harmony (only when Harmony is engaged).
                     // Both transformed voices are queued so they sound in parallel with
                     // the player; the raw dry note is emitted ONLY when Keep Input is ON.
+                    // Duet is purely 1:1 -- it does NOT build a generative loop, so resolve
+                    // the scale root here (Answer mode only does it at loop start, which
+                    // Duet no longer reaches) to keep the transforms in key.
+                    ResolveActiveRoot(scaleRootKnob, scaleMode);
                     int origDeg = MusicTheory::GetScaleDegree((int)pitch, fActiveRoot, scaleMode);
                     int baseDeg = origDeg + transposeShift;
                     if (responseMode == 1) baseDeg = -baseDeg;
@@ -1042,10 +1024,11 @@ public:
                     fFramesSinceSilence = 0;
                     fFramesSinceAllNotesOff = 0;
                 } else {
-                    // DUET MODE: Completely bypass the Silence Threshold wait!
-                    fPhraseLengthPPQ = SnapToNearestBeat(fPhraseLengthPPQ);
-                    fState = STATE_PATIENCE;
-                    fPatiencePPQRemaining = GetPatiencePPQ(isSync, patienceFree, patienceSync);
+                    // DUET MODE is a pure live 1:1 processor -- it does NOT build a
+                    // generative loop. When the player goes silent, just reset to IDLE so
+                    // the next phrase starts fresh; the live response keeps running
+                    // independently through fDuetQueue.
+                    fState = STATE_IDLE;
                     fFramesSinceAllNotesOff = 0;
                 }
             }
@@ -1055,13 +1038,10 @@ public:
 
         if (fState == STATE_EVALUATING_SILENCE) {
             if (!isAnswerMode) {
-                // DUET MODE completely ignores the Silence Threshold: it must never sit
-                // in the silence-evaluation wait (this can only happen if the mode was
-                // switched mid-evaluation). Snap straight through to Patience so the
-                // live harmonizer is never gated by the silence timer.
-                fPhraseLengthPPQ = SnapToNearestBeat(fPhraseLengthPPQ);
-                fState = STATE_PATIENCE;
-                fPatiencePPQRemaining = GetPatiencePPQ(isSync, patienceFree, patienceSync);
+                // DUET MODE never loops and never waits on the Silence Threshold. If we
+                // somehow land here (e.g. the mode was switched mid-evaluation) just
+                // reset to IDLE; the live response keeps running through fDuetQueue.
+                fState = STATE_IDLE;
                 fFramesSinceSilence = 0;
             } else {
                 fFramesSinceSilence += 64;
@@ -1100,8 +1080,16 @@ public:
         }
 
         // -----------------------------------------------------------------------
-        // GENERATIVE PLAYBACK (Now runs in BOTH Answer and Duet modes!)
+        // GENERATIVE PLAYBACK (ANSWER MODE ONLY -- Duet is purely live 1:1)
         // -----------------------------------------------------------------------
+        // If we are in Duet but still in PLAYING (the mode was switched mid-loop),
+        // tear the loop down and return to live-only operation.
+        if (fState == STATE_PLAYING && !isAnswerMode) {
+            KillHangingNotes(0);
+            fState = STATE_IDLE;
+            fPlaybackPPQ = 0.0; fShadowPlaybackPPQ = 0.0;
+        }
+
         if (fState == STATE_PLAYING) {
             activeWindowPPQ = fPhraseLengthPPQ * lengthMultiplier;
 
